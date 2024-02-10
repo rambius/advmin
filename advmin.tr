@@ -3,11 +3,48 @@ NetBSD for the Advanced Minimalist
 .AU
 rambius
 .AB
+This document describes a NetBSD setup that relies on as
+few dependencies as possible. It is equally suitable for
+small laptops and for bigger machines.
 .AE
 .NH
-Why Going Minimal
-
-.NH
-Why Going Minimal
+Why Going Minimal?
 .PP
-Because we can and because we are sick of updates.
+The short answer is: because we can. The long answer is
+that more software needs more maintenance. As 
+BSD users we are spoilt - it takes two commands on NetBSD
+to upgrade all your packages:
+
+.DS
+$ sudo pkgin update
+$ sudo pkgin upgrade
+.DE
+
+Still it does requires time and effort. Hence the question - why do I need to update something I don't use.
+.NH 2 
+Why Do I Try to be Minimal?
+.PP
+My first laptop ran FreeBSD with KDE. I enjoyed it a lot
+but KDE upgrades sometimes failed and I had time to fix them. Then during an NYCBSD meeting
+I was peeking over G. R.'s shoulder and asked him what
+window manager he was using and it was XFCE. I tried XFCE
+and it was a little bit lighter. Next, I worked on a
+project where I did not have access to a window 
+manager, but I managed to set up a convenient working
+environment, see my talk at NYCBUG from 2019-09-04.
+.PP
+Then out of curiosity I bought a Pinebook laptop and installed NetBSD on it. I did not
+want to do any extensive configuration of a window manager
+and I didn't want to bother with many updates and I was
+using it most in text-mode.
+.PP
+Finally in December 2023 I was travelling in Europe and I
+was straned for a day in Germany because of a snow storm.
+I messaged and emailed (from my phone) my family over
+several channels to know that I was ok. While I was waiting
+for flights I asked myself how much of that communication
+I could have done from that Pinebook laptop. I took it out 
+along with a pencil and a paper notebook and started
+working on that idea.
+.PP This talk is the product of that effort. 
+
