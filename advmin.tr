@@ -14,26 +14,26 @@ The short answer is: because we can. The long answer is
 that more software needs more maintenance. As 
 BSD users we are spoilt - it takes two commands on NetBSD
 to upgrade all your packages:
-
 .DS
 $ sudo pkgin update
 $ sudo pkgin upgrade
 .DE
-
 Still it does requires time and effort. Hence the question - why do I need to update something I don't use.
 .NH 2 
-Why Do I Try to be Minimal?
+My Path to Minimal or No Dependencies
 .PP
-My first laptop ran FreeBSD with KDE. I enjoyed it a lot
-but KDE upgrades sometimes failed and I had time to fix them. Then during an NYCBSD meeting
-I was peeking over G. R.'s shoulder and asked him what
-window manager he was using and it was XFCE. I tried XFCE
-and it was a little bit lighter. Next, I worked on a
+My first laptop ran FreeBSD with KDE. I enjoyed it
+but KDE upgrades sometimes failed - back then I had time to
+fix them. Then during a NYCBSD meeting
+G. R. told me he was using XFCE. I tried it
+and it was a little bit lighter and required less
+dependencies. Next, I worked on a
 project where I did not have access to a window 
 manager, but I managed to set up a convenient working
 environment, see my talk at NYCBUG from 2019-09-04.
 .PP
-Then out of curiosity I bought a Pinebook laptop and installed NetBSD on it. I did not
+Then out of curiosity I bought a Pinebook laptop and
+installed NetBSD on it. I did not
 want to do any extensive configuration of a window manager
 and I didn't want to bother with many updates and I was
 using it most in text-mode.
@@ -43,8 +43,98 @@ was straned for a day in Germany because of a snow storm.
 I messaged and emailed (from my phone) my family over
 several channels to know that I was ok. While I was waiting
 for flights I asked myself how much of that communication
-I could have done from that Pinebook laptop. I took it out 
-along with a pencil and a paper notebook and started
+I could have done from that Pinebook laptop. How much of my
+daily work can be done on almost vanilla NetBSD? I took out
+the laptop,
+a pencil and a paper notebook and started
 working on that idea.
 .PP This talk is the product of that effort. 
-
+.NH
+NetBSD Installation on the Pinebook
+.PP
+The Pinebook comes with Android on its 16GB eMMC storage.
+I never removed the Android because the machine can boot
+from an MicroSD card. There is a NetBSD live image that
+can be written on an microSD card.
+.PP
+These links are useful:
+.IP \[bu]
+https://wiki.netbsd.org/ports lists what NetBSD port
+supports what CPU and architecture;
+.IP \[bu]
+https://wiki.netbsd.org/ports/aarch64 describes the port
+that runs on the Pinebook;
+.IP \[bu]
+https://cdn.NetBSD.org/pub/NetBSD/NetBSD-9.3/evbarm-aarch64/
+contains the binaries for that port; and finally
+.IP \[bu]
+https://cdn.NetBSD.org/pub/NetBSD/NetBSD-9.3/evbarm-aarch64/INSTALL.html contains the installation instructions.
+.PP
+The installation consists of downloading the NetBSD image,
+transfering it to an SD card, and making the SD bootable. I
+am using another NetBSD machine for these steps.
+.NH 2
+Downloading the NetBSD Image
+.PP
+Downloading the image is as easy as
+.DS
+$ curl -sS -C - https://cdn.NetBSD.org/pub/NetBSD/NetBSD-9.3/evbarm-aarch64/binary/gzimg/arm64.img.gz -o arm64.img.gz
+$ gunzip arm64.img.gz
+.DE
+.NH 2
+Transfering the image to a microSD Card
+.PP
+The next step is to copy the uncompressed image to a
+microSD card. You need a microSD card, an SD card reader
+and depending on the reader an SD card adapter. Put the
+the microSD card either in the adapter and then the adapter
+in the reader or in the reader directly. Plugin
+the reader in the machine where you downloaded the image.
+Find in dmesg what device the microSD card maps to. Write
+the image to that device:
+.DS
+$ sudo dd if=arm64.img of=/dev/rld0c bs=1m conv=sync
+.DE
+.NH 2
+Making the SD Bootable
+.PP
+The Pinebook uses the U-Boot bootloader. You need to put
+the U-Boot's Secondary Program Loader on the microSD card
+so that it knows how boot NetBSD. NetBSD provides
+provides a package with the U-Boot's SPL for Pinebook:
+.DS
+$ sudo pkgin install u-boot-pinebook
+$ cd /usr/pkg/share/u-boot/pinebook
+$ sudo dd if=u-boot-sunxi-with-spl.bin of=/dev/rld0c bs=1k seek=8 conv=sync
+.DE
+.PP
+The dd commands can be dangerous. Make sure you have the
+correct output devices especially if you run them on a
+Pinebook - you may destroy your boot microSD card.
+.NH 2
+Booting the Pinebook
+.PP
+Put the microSD card and turn on the laptop. It loads the
+NetBSD OS from the card. The image is configured to
+resize the NetBSD partition to fill the whole card and to
+resize the / slice to fill the whole partition. It reboots again and the system is ready.
+.NH
+Initial Configuration
+.PP
+We now need to create the initial user, give them
+permissions to furter configure the system, enable the
+network, etc.
+.NH 2
+Setting the root's Password
+.PP
+The image's original root password is the empty string. We
+login as root and we change it immediately.
+.DS
+login: root
+Password:
+# passwd
+.DE
+.NH 2
+Adding a Non-root User
+.PP
+ 
