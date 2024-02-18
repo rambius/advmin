@@ -117,7 +117,14 @@ Booting the Pinebook
 Put the microSD card and turn on the laptop. It loads the
 NetBSD OS from the card. The image is configured to
 resize the NetBSD partition to fill the whole card and to
-resize the / slice to fill the whole partition. It reboots again and the system is ready.
+resize the / slice to fill the whole partition. It reboots
+again and the system is ready.
+.PP
+There were certain rough edges after my first boot. The
+image enables only one tty that the system uses to send the
+console messages. Those messages mangled my input. I got a
+flood of errors about the wirless adapter I had plugged in.
+I unplugged it so that I can use the tty.
 .NH
 Initial Configuration
 .PP
@@ -137,4 +144,162 @@ Password:
 .NH 2
 Adding a Non-root User
 .PP
- 
+Working as root all the time is dangerous. We need to
+create a non-root user who can run comands as root. The
+commans su switches identities. A user can run it if
+they are in the wheels group:
+.DS
+# useradd -m -G wheel rambius
+# passwd rambius
+# exit
+login: rambius
+Password:
+$ su -
+Password:
+#
+.DE
+.PP
+After that change we will never login directly as root.
+.NH 2
+Configuring the ttys
+.PP
+The image enables only one tty that the system use to send
+the console messages. Edit /etc/ttys to enable the
+additional ones:
+.DS
+$ su -
+# vi /etc/ttys
+# kill -s HUP 1
+# exit
+$ exit
+.DE
+.PP
+Now we switch with Ctrl-FN to ttyN.
+.NH 2
+Configuring the Wireless
+.PP
+Now we plug the wireless adapter back in. The
+wpa_supplicant daemon is responsible for the wifi
+connections. We have to configure it and start it. Its
+configuration file is /etc/wpa_supplicant.conf where we
+put the network's details, namely its SSID and the
+password:
+.DS
+ctrl_interface=/var/run/wpa_supplicant
+ctrl_interface_group=wheel
+update_config=1
+
+network={
+        ssid="myssid"
+        psk="mypass"
+        scan_ssid=1
+}
+.DE
+.PP
+Next we configure it to start on boot by adding the
+following line it to /etc/rc.conf:
+.DS
+wpa_supplicant=YES
+.DE
+.PP
+We either reboot or we start the daemon manually
+.DS
+# service wpa_supplicant start
+# ping nycbug.org
+# ifconfig
+.DE
+.NH 2
+Configuring the Package Manager pkgin
+.PP
+I said that I would use a minimal amount of third-party
+packages; I did not meant no packages at all.
+.PP
+The command pkg_add installs binary packages pre-built for
+the corresponding architecture. I prefer to use pkgin
+because of its searching capabilities. I use pkg_add to
+install pkgin only.
+.PP
+pkg_add needs to know where it can find the packages.
+The environment variable PKG_PATH specifies their location.
+.DS
+$ su -
+# PKG_PATH=http://cdn.netbsd.org/pub/pkgsrc/packages/`uname -s`/`uname -p`/`uname -r`/All
+# export PKG_PATH
+# pkg_add pkgin
+.DE
+.PP
+I initially tried PKG_PATH with https, but it failed and I
+switched to http.
+.PP
+`uname -s` returns the OS's name, in this case NetBSD ,
+`uname -p` returns the architecture name, for example
+aarc64, `uname -r` returns the OS's version. The reason
+for so many parameters is that the packages are built
+for many architectures and for several versions.
+.PP
+pkgin is almost ready now. We need to adjust its
+repositories list in its configuration file
+/usr/pkg/etc/pkgin/repositories.conf and fetch the list
+with remote packaes. I only had to remove the hardcoded
+values for the OS's version and architecture:
+.DS
+# tail -1 /usr/pkg/etc/pkgin/repositories.conf
+https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$arch/$osrelease/All
+# pkgin update
+.DE
+.NH 2
+Installing and Configuring sudo
+.PP
+The first package we will install with pkgin is sudo,
+because we want to not use su. sudo can run only a
+specific command as root in a non-root session thus
+decreasing the possibilities for errors.
+.DS
+# pkgin install sudo
+.DE
+The configuration file /usr/pkg/etc/sudoers specfifies
+what users and groups can run what commands. It already
+has a commented entry that allows members of the wheel
+group to run any command. We don't edit the file directly;
+instead we use the visudo command.
+.DS
+# visudo
+.DE
+We uncomment the line
+.DS
+%wheel ALL=(ALL:ALL) ALL
+.DE
+.PP
+We exit the su session and from now on we use only sudo
+for any command that requires elevated permissions.
+.PP
+Usually in a more restricted environent you can only
+run specific commands with specific arguments. To view
+these commands use -l option of the command sudo:
+.DS
+$ whoami
+rambius
+$ sudo -l
+User rambius may run the following commands on arm64:
+    (ALL : ALL) ALL
+.DE
+.PP
+For a complete treatment of sudo read the book Sudo
+Mastery by Michael Lucas.
+.PP
+This concludes the initial configuration of the system.
+Next we will discuss various applications.
+.NH
+Applications
+.PP
+We can now do a lot of useful tasks with our small laptop,
+for example:
+.IP \[bu] 2
+write a book with groff;
+.IP \[bu]
+organize your expenses with awk (it's the tax season);
+.IP \[bu]
+develop with cc, make, etc.
+.PP
+What follows is a list of application that I use regularly
+or find them interesting.
