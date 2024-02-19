@@ -288,9 +288,9 @@ For a complete treatment of sudo read the book Sudo
 Mastery by Michael Lucas.
 .PP
 This concludes the initial configuration of the system.
-Next we will discuss various applications.
+Next we will discuss various programs and applications.
 .NH
-Applications
+Program and Applications
 .PP
 We can now do a lot of useful tasks with our small laptop,
 for example:
@@ -301,5 +301,72 @@ organize your expenses with awk (it's the tax season);
 .IP \[bu]
 develop with cc, make, etc.
 .PP
-What follows is a list of application that I use regularly
-or find them interesting.
+What follows is a list of programs and application that I
+use regularly or find them interesting.
+.NH 2
+The "Intergrated Development Environment" tmux.
+.PP
+My user interface of choice is tmux. It is in NetBSD's base
+system and does not require seperate installation. It is a
+terminal multiplexer that allows splitting the screen in
+several horizontal or vertical panes. My usual development 
+style is to have 3 panes - one for the code I work on, one
+for its unit test and one with a shell where I compile and
+test. When writing this document with nroff I use only two
+panes - one to write it in vi and one to view it. I put the
+processing commands in a Makefile and I call make from vi.
+You can also open several windows in tmux and have as many
+panes as you want in them. Think of windows as tabs. 
+.PP
+The biggest advantage of tmux is that you can detach from
+your session and then attach to it later. The sessions
+also survives network disconnects. For example
+.DS
+$ ssh sdf.org
+sdf$ tmux
+# Open windows and panes
+# Ctrl-b d to detach or network drops and later:
+$ ssh sdf.org
+sdf$ tmux attach
+# and continue your session 
+.DE
+.PP
+tmux also has a status line where it can dispay data about
+the current session or about the system. That brings us to
+the next topic
+.NH 2
+Battery Monitoring and envstat
+.PP
+Laptops get plugged and unplugged all the time especially
+if you have cats or dogs. The command envstat shows the
+supported devices' sensor values:   
+.DS
+$ envstat
+                               Current  CritMax  WarnMax  WarnMin  CritMin  Unit
+[axppmic0]
+               ACIN present:      TRUE
+               VBUS present:     FALSE
+            battery present:      TRUE
+                   charging:     FALSE
+               charge state:    NORMAL
+            battery voltage:     4.176                                         V
+     battery charge current:     0.001                                         A
+  battery discharge current:       N/A
+            battery percent:       100                                      none
+   battery maximum capacity:     4.844                                        Ah
+   battery current capacity:     4.843                                        Ah
+[sunxithermal0]
+            CPU temperature:    43.000                                      degC
+          GPU temperature 1:    44.000                                      degC
+          GPU temperature 2:    44.000                                      degC
+.DE
+.PP
+The device axppmic0 has a sensor that reads the battery
+percentage. We can extract the value with awk:
+.DS
+$ envstat | awk '/battery percent/ { printf("%d%%", $3) }'
+.DE
+.PP
+For convenience we put the command in a shell script
+~/bin/bat.sh and we can show its output in tmux's status
+line. 
