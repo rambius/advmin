@@ -11,8 +11,8 @@ small laptops and for bigger machines.
 Why Going Minimal?
 .PP
 The short answer is: because we can. The long answer is
-that more software needs more maintenance. As 
-BSD users we are spoilt - it takes two commands on NetBSD
+that more software needs more maintenance. As BSD users we
+are spoilt - it takes two commands on NetBSD
 to upgrade all your packages:
 .DS
 $ sudo pkgin update
@@ -22,33 +22,32 @@ Still it does requires time and effort. Hence the question - why do I need to up
 .NH 2 
 My Path to Minimal or No Dependencies
 .PP
-My first laptop ran FreeBSD with KDE. I enjoyed it
-but KDE upgrades sometimes failed - back then I had time to
-fix them. Then during a NYCBSD meeting
-G. R. told me he was using XFCE. I tried it
-and it was a little bit lighter and required less
-dependencies. Next, I worked on a
-project where I did not have access to a window 
-manager, but I managed to set up a convenient working
-environment, see my talk at NYCBUG from 2019-09-04.
+My first laptop ran FreeBSD with KDE. I enjoyed it but KDE
+upgrades sometimes failed - back then I had time to fix
+them. Then during a NYCBSD meeting G. R. told me he was
+using XFCE. I tried it and it was a little bit lighter and
+required less dependencies. Next, I worked on a project
+where I did not have access to a window manager, but I
+managed to set up a convenient working environment, see my
+talk at NYCBUG from 2019-09-04.
 .PP
 Then out of curiosity I bought a Pinebook laptop and
-installed NetBSD on it. I did not
-want to do any extensive configuration of a window manager
-and I didn't want to bother with many updates and I was
-using it most in text-mode.
+installed NetBSD on it. I did not want to do any extensive
+configuration of a window manager and I didn't want to
+deal with many updates. I started using it mainly in
+text-mode.
 .PP
 Finally in December 2023 I was travelling in Europe and I
-was straned for a day in Germany because of a snow storm.
+was stranded for a day in Germany because of a snow storm.
 I messaged and emailed (from my phone) my family over
-several channels to know that I was ok. While I was waiting
-for flights I asked myself how much of that communication
-I could have done from that Pinebook laptop. How much of my
-daily work can be done on almost vanilla NetBSD? I took out
-the laptop,
-a pencil and a paper notebook and started
-working on that idea.
-.PP This talk is the product of that effort. 
+several channels to let them know that I was ok. While I
+was waiting for flights I asked myself how much of that
+communication I could have done from that Pinebook laptop.
+How much of my daily work can be done on almost vanilla
+NetBSD? I took out the laptop, a pencil and a paper
+notebook and started working on that idea.
+.PP
+This talk is the product of that effort. 
 .NH
 NetBSD Installation on the Pinebook
 .PP
@@ -100,8 +99,8 @@ Making the SD Bootable
 .PP
 The Pinebook uses the U-Boot bootloader. You need to put
 the U-Boot's Secondary Program Loader on the microSD card
-so that it knows how boot NetBSD. NetBSD provides
-provides a package with the U-Boot's SPL for Pinebook:
+so that it knows how to boot NetBSD. NetBSD provides
+a package with the U-Boot's SPL for Pinebook:
 .DS
 $ sudo pkgin install u-boot-pinebook
 $ cd /usr/pkg/share/u-boot/pinebook
@@ -297,7 +296,7 @@ for example:
 .IP \[bu] 2
 write a book with groff;
 .IP \[bu]
-organize your expenses with awk (it's the tax season);
+organize our expenses with awk (it's the tax season);
 .IP \[bu]
 develop with cc, make, etc.
 .PP
@@ -320,12 +319,12 @@ panes as you want in them. Think of windows as tabs.
 .PP
 The biggest advantage of tmux is that you can detach from
 your session and then attach to it later. The sessions
-also survives network disconnects. For example
+also survives network and VPN disconnects. For example
 .DS
 $ ssh sdf.org
 sdf$ tmux
 # Open windows and panes
-# Ctrl-b d to detach or network drops and later:
+# Ctrl-b d to detach or network drops later:
 $ ssh sdf.org
 sdf$ tmux attach
 # and continue your session 
@@ -369,4 +368,114 @@ $ envstat | awk '/battery percent/ { printf("%d%%", $3) }'
 .PP
 For convenience we put the command in a shell script
 ~/bin/bat.sh and we can show its output in tmux's status
-line. 
+line. tmux's behavior is controlled by its options and the
+command
+.DS
+$ tmux show-options -A
+.DE
+lists all of them. The option status-right specifies the
+contents of the right side of the status line. We create
+~/.tmux.conf and set the status-right option in it:
+.DS
+$ cat ~/.tmux.conf
+set -g status-right "\\"#{=21:pane_title}\\"%H:%M %d-%b-%y #(bat.sh)"
+.DE
+The notation #(<command>) show the command's output in the
+option's value. After we change ~/.tmux.conf we restart
+tmux and can observe the battery percentage.
+.NH 2
+Email with mutt
+.PP
+Mutt is a text-based email client. We install it with
+.DS
+$ sudo pkgin install mutt
+.DE
+We will demonstrate how to use it with a gmail account. 
+Enable the two-factor authentication in your Google
+account. Then generate an App Password for mutt and put the
+it in ~/.mutt/.gmailpass. Next, you need to create a mutt
+configuration file in ~/.muttrc:
+.DS
+set ssl_starttls = yes
+set ssl_force_tls = yes
+
+set from = "me@gmail.com"
+set realname = "Me Me"
+
+set imap_user = "me@gmail.com"
+set imap_pass = `cat ~/.mutt/.gmailpass`
+
+set folder = "imaps://imap.gmail.com"
+set spoolfile = "+INBOX"
+.DE
+The folder variable specifies the location of the mailboxes
+; the spoolfile one defines the user's inbox where the mail
+arrives. This setup is enough if you want to read your
+email. 
+.PP
+I have thousands of messages in my inbox. Mutt was slow on
+start because it had to fetch them every time. However, it
+can cache the messages and their headers locally: 
+.DS
+set header_cache = "~/.mutt/cache/headers/"
+set message_cachedir = "~/.mutt/cache/bodies/"
+.DE
+If the header_cache variable specifies a directory, we
+have to create it in advance.
+.PP
+By default mutt sorts the email by the date received. If
+you want the latest on top use
+.DS
+set sort = "reverse-date-received"
+.DE
+.PP 
+Now we are ready to configure mutt to send mail. We need
+the following entries in ~/.muttrc:
+.DS
+set smtp_url = "smtps://me@gmail.com@smtp.gmail.com"
+set smtp_pass = "$imap_pass"
+.DE
+We can test email sending from the command line:
+.DS
+arm64$ echo "test from mutt" | mutt -s "test from mutt" me@gmail.com
+TLSv1.3 connection using TLSv1.3 (TLS_AES_256_GCM_SHA384)
+No authenticators available
+Could not send the message.
+.DE
+The first attempt failed. mutt depends on cyrus-sasl to do
+the authentication. That package does not install any
+autenticators. After some trial and error I discover it
+needs cy2-login:
+.DS
+$ sudo pkgin install cy2-login
+$ echo "test from mutt" | mutt -s "test from mutt" me@gmail.com
+TLSv1.3 connection using TLSv1.3 (TLS_AES_256_GCM_SHA384)
+.DE
+.PP
+It sends email successfully now. This conclude mutt's
+configuration.
+.NH 2
+Web Browsing
+.PP
+There are few text-based browsers. I have been using lynx
+for quite some time and as expected few sites render well
+in it. It does not support JavaScript and if a site needs
+it then it will not work. elinks has some JavaScript
+support but I have never tried it. w3m can display images
+on suitable terminals.
+.PP
+To install lynx run
+.DS
+$ sudo pkgin install ca-certificates
+$ sudo update-ca-certificates
+$ sudo pkgin install lynx
+.DE 
+The package ca-certificates contains the root certificates
+of several certificate signing autorities. Without them
+lynx throws https-related errors when it opens https sites
+and curl refuses to work with https.
+.PP
+To use lynx run
+.DS
+$ lynx https://nycbug.org
+.DE 
