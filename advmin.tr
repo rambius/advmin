@@ -469,9 +469,40 @@ We install irssi:
 .DS
 $ sudo pkgin install irssi
 .DE
-I will demonstrate how to connect to #nycbug channel at
-libera.chat:
-
+We will demonstrate  how to connect to #nycbug channel at
+libera.chat.
+.NH 3
+Nickname Registration
+.PP
+You need to register your nickname with libera. If you have
+done so you can skip it.
+.DS
+$ irssi
+/set nick <yournick> 
+/network
+/connect liberachat
+/msg NickServ register <yourpass> <youremail>
+.DE
+You will receive an email with a verification command. It
+looks like
+.DS
+/msg NickServ verify register <yournick> <token>
+.DE
+You type it back in irssi and your nickname is registered.
+.PP
+All IRC commands start with a "/". /network lists the
+predefined networks in irssi. liberachat is there and we
+can /connect to it. Next we register the nickname and then
+we verify the registration. Now we are ready to join
+#nycbug channel:
+.DS
+$ irssi
+/connect liberachat
+/msg NickServ identify <yournick> <yourpass>
+/join #nycbug
+.DE
+The /msg command identifies you with the password you
+registered.
 .NH 2
 Web Browsing
 .PP
