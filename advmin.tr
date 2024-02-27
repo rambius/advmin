@@ -435,7 +435,7 @@ the following entries in ~/.muttrc:
 set smtp_url = "smtps://me@gmail.com@smtp.gmail.com"
 set smtp_pass = "$imap_pass"
 .DE
-We can test email sending from the command line:
+We can test sending email from the command line:
 .DS
 arm64$ echo "test from mutt" | mutt -s "test from mutt" me@gmail.com
 TLSv1.3 connection using TLSv1.3 (TLS_AES_256_GCM_SHA384)
@@ -455,6 +455,24 @@ TLSv1.3 connection using TLSv1.3 (TLS_AES_256_GCM_SHA384)
 It sends email successfully now. This conclude mutt's
 configuration.
 .NH 2
+Internet Relay Chat
+.PP
+NetBSD provides several IRC clients. You can search for
+them with
+.DS
+$ pkgin search irc
+.DE
+You can search for packages by their names or by any
+pattern. 
+.PP
+We install irssi:
+.DS
+$ sudo pkgin install irssi
+.DE
+I will demonstrate how to connect to #nycbug channel at
+libera.chat:
+
+.NH 2
 Web Browsing
 .PP
 There are few text-based browsers. I have been using lynx
@@ -473,9 +491,45 @@ $ sudo pkgin install lynx
 The package ca-certificates contains the root certificates
 of several certificate signing autorities. Without them
 lynx throws https-related errors when it opens https sites
-and curl refuses to work with https.
+and curl refuses to work with them.
 .PP
 To use lynx run
 .DS
 $ lynx https://nycbug.org
+.DE
+Don't expect first-class experience with text-based
+browsing. I tried to log into GitHub with lynx to copy a
+repository's URL - I could not.
+.PP
+Still there is an interesting application I want to show.
+When we open any graphical web browser we could just type a
+query and it searches the Internet for it with its
+configured search engine. Lynx is interactive but we can
+automate it with expect. Consider the following script:
+.DS
+#!/usr/pkg/bin/expect -f
+if { $argc == 0 } {
+    puts "$::argv0 <search query>"
+    exit 1
+}
+spawn lynx https://lite.duckduckgo.com/lite
+expect "Search"
+send "\\t"
+send "$argv"
+send "\\r"
+expect "<return>"
+send "\\r"
+interact
 .DE 
+This tells expect to open DuckDuckGo in lynx (or whatever
+search engine we prefer), wait for the term "Search" to
+appear on the screen, send a tab to focus the text field
+in the search form, send the search query and press Enter
+two times. For example:
+.DS
+$ sudo pkgin install tcl-expect
+$ ./duck.ex "nycbug dmesg"
+.DE
+I used a similar approach to automate a http login session
+from lynx and download a file. I could not use curl,
+because it was using cookies.
