@@ -128,9 +128,10 @@ I unplugged it so that I can use the tty.
 Initial Configuration
 .PP
 We now need to create the initial user, give them
-permissions to furter configure the system, enable the
+permissions to further configure the system, enable the
 network, etc.
 .NH 2
+
 Setting the root's Password
 .PP
 The image's original root password is the empty string. We
@@ -144,8 +145,8 @@ Password:
 Adding a Non-root User
 .PP
 Working as root all the time is dangerous. We need to
-create a non-root user who can run comands as root. The
-commans su switches identities. A user can run it if
+create a non-root user who can run commands as root. The
+command su switches identities. A user can run it if
 they are in the wheels group:
 .DS
 # useradd -m -G wheel rambius
@@ -256,7 +257,7 @@ decreasing the possibilities for errors.
 .DS
 # pkgin install sudo
 .DE
-The configuration file /usr/pkg/etc/sudoers specfifies
+The configuration file /usr/pkg/etc/sudoers specifies
 what users and groups can run what commands. It already
 has a commented entry that allows members of the wheel
 group to run any command. We don't edit the file directly;
@@ -306,7 +307,7 @@ use regularly or find them interesting.
 The "Intergrated Development Environment" tmux.
 .PP
 My user interface of choice is tmux. It is in NetBSD's base
-system and does not require seperate installation. It is a
+system and does not require separate installation. It is a
 terminal multiplexer that allows splitting the screen in
 several horizontal or vertical panes. My usual development 
 style is to have 3 panes - one for the code I work on, one
@@ -501,8 +502,13 @@ $ irssi
 /msg NickServ identify <yournick> <yourpass>
 /join #nycbug
 .DE
-The /msg command identifies you with the password you
-registered.
+The /msg command identifies us with the password we
+registered. We are now ready to send messages to the
+channel.
+.PP
+We can connect to several channels on different servers
+simultaneously. We will show how to do it with the
+#pinebook channel.
 .NH 2
 Web Browsing
 .PP
@@ -564,3 +570,14 @@ $ ./duck.ex "nycbug dmesg"
 I used a similar approach to automate a http login session
 from lynx and download a file. I could not use curl,
 because it was using cookies.
+.NH 2
+Sound and Sound Applications
+.PP
+The command audiocfg list the available sound devices:
+.DS
+$ audiocfg list
+.DE
+.NH 2
+Typesetting
+.PP
+
