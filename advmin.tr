@@ -131,7 +131,6 @@ We now need to create the initial user, give them
 permissions to further configure the system, enable the
 network, etc.
 .NH 2
-
 Setting the root's Password
 .PP
 The image's original root password is the empty string. We
@@ -212,7 +211,7 @@ We either reboot or we start the daemon manually
 Configuring the Package Manager pkgin
 .PP
 I said that I would use a minimal amount of third-party
-packages; I did not meant no packages at all.
+packages; I did not mean no packages at all.
 .PP
 The command pkg_add installs binary packages pre-built for
 the corresponding architecture. I prefer to use pkgin
@@ -470,7 +469,7 @@ We install irssi:
 .DS
 $ sudo pkgin install irssi
 .DE
-We will demonstrate  how to connect to #nycbug channel at
+We will demonstrate how to connect to #nycbug channel at
 libera.chat.
 .NH 3
 Nickname Registration
@@ -576,7 +575,66 @@ Sound and Sound Applications
 The command audiocfg list the available sound devices:
 .DS
 $ audiocfg list
+0: [*] audio0 @ ausoc0: sun50i-a64-audi
+       playback: 2ch, 48000Hz
+       record:   2ch, 48000Hz
+       (PR) slinear_le 16/16, 2ch, { 48000 }
+1: [ ] audio1 @ ausoc1: hdmi-audio
+       playback: 2ch, 48000Hz
+       record:   unavailable
+       (PR) slinear_le 16/16, 2ch, { 48000 }
 .DE
+The device with * is the default one. The same command
+can test it by playing a tone:
+.DS
+$ audiocfg test 0
+0: [*] audio0 @ ausoc0: sun50i-a64-audi
+       playback: 2ch, 48000Hz
+       record:   2ch, 48000Hz
+       (PR) slinear_le 16/16, 2ch, { 48000 }
+  testing channel 0... done
+  testing channel 1... done
+.DE
+Initially I did not hear anything because the volume was 0.
+The command mixerctl shows and control the volume and othe
+sound settings:
+.DS
+$ mixerctl -a
+outputs.master=0,0
+outputs.mute=off
+outputs.source=headphones
+inputs.line=0,0
+inputs.headphones=0,0
+record.line=0,0
+record.mic=96,96
+record.mic.preamp=off
+record.mic2=96,96
+record.mic2.preamp=off
+record.agc=96,96
+record.source=
+$ mixerctl outputs.master
+outputs.master=0,0
+.DE
+The option -a shows all settings. Providing a setting's
+name shows its value. The option -w can set a value:
+.DS
+$ mixerctl -w outputs.master=50
+outputs.master: 0,0 -> 48,48
+$ audiocfg test 0
+0: [*] audio0 @ ausoc0: sun50i-a64-audi
+       playback: 2ch, 48000Hz
+       record:   2ch, 48000Hz
+       (PR) slinear_le 16/16, 2ch, { 48000 }
+  testing channel 0... done
+  testing channel 1... done
+$ mixerctl -w outputs.master++
+outputs.master: 48,48 -> 52,52
+.DE
+.PP
+The command audioplay can play .wav files.
+https://samplelib.com/ contains test files in various
+formats without
+license 
 .NH 2
 Typesetting
 .PP
