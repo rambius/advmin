@@ -332,7 +332,7 @@ sdf$ tmux attach
 .PP
 tmux also has a status line where it can dispay data about
 the current session or about the system. That brings us to
-the next topic
+the next topic.
 .NH 2
 Battery Monitoring and envstat
 .PP
@@ -489,6 +489,8 @@ looks like
 /msg NickServ verify register <yournick> <token>
 .DE
 You type it back in irssi and your nickname is registered.
+.NH 3
+Connectiong to a Channel
 .PP
 All IRC commands start with a "/". /network lists the
 predefined networks in irssi. liberachat is there and we
@@ -504,10 +506,6 @@ $ irssi
 The /msg command identifies us with the password we
 registered. We are now ready to send messages to the
 channel.
-.PP
-We can connect to several channels on different servers
-simultaneously. We will show how to do it with the
-#pinebook channel.
 .NH 2
 Web Browsing
 .PP
@@ -631,11 +629,292 @@ $ mixerctl -w outputs.master++
 outputs.master: 48,48 -> 52,52
 .DE
 .PP
+If test command plays its tones we have working audio.
+.NH 3
+Playing Music
+.PP
 The command audioplay can play .wav files.
 https://samplelib.com/ contains test files in various
-formats without
-license 
+formats without any license that can be used for testing.
+I downloaded several wav files and tested audioplay
+with them:
+.DS
+$ mixerctl outputs.master
+outputs.master=200,200
+$ audioplay *.wav
+.DE 
+WAV stores the audio information in uncompressed form
+without information loss and the files are larger. On the
+other hand MP3 uses lossy data compression. mpg123 plays
+MP3 files. I installed it and downloaded several mp3 files
+from https://samplelib.com and played them:
+.DS
+$ mpg123 *.mp3
+.DE
+mpg123 is a versatile player. You can create playlist,
+play random tracks, loop, etc.
+.PP
+It is instructive the see the size ratios of the WAV and
+MP3 counterparts. I wrote a script that calculates them:
+.DS
+$ cat src/wav_to_mp3.sh
+#!/bin/sh
+cd ~/downloads
+printf "Name\\t\\tWAV\\tMP3\\tRatio\\n"
+for len in `seq 3 3 15`; do
+  name=sample-${len}s
+  mp3_size=`stat -f "%z" mp3/${name}.mp3`
+  wav_size=`stat -f "%z" wav/${name}.wav`
+  ratio=`echo "${wav_size} / ${mp3_size}" | bc` 
+  printf "%s\\t%s\\t%s\\t%s:1\\n" ${name} ${wav_size} ${mp3_size} $ratio 
+done
+$ src/wav_to_mp3.sh
+Name		WAV	MP3	Ratio
+sample-3s	563756	52079	10:1
+sample-6s	1127468	103070	10:1
+sample-9s	1691180	154062	10:1
+sample-12s	2254892	205470	10:1
+sample-15s	3382316	307453	11:1
+.DE
+The MP3 compression resulted in ten-fold disk space
+decrease and in loss of quality. If you have the raw audio
+file you can control the quality versus size when you
+compress it similar to the text compression utilities like
+gzip. Data compression is a really interesting topic and I
+hope somebody gives a talk about it. 
+.NH 3
+Podcasts
+.PP
+The podcasts are radio programs made available for
+downloads over the Internet. Usually the producer provides
+an RSS feed and the clients fetch the feed, parse it and
+download the content and play it now or later. We will use 
+as examples BSDNow's and BBC's feeds.
+.PP
+The package that downloads the podcasts is podcastdl:
+.DS
+$ sudo pkgin install podcastdl
+.DE 
+We create a file that contains the feeds' URLs and we call 
+podcastdl with it. Once it has finished we play them with
+mpg123.
+.DS
+$ cat podcasts.cfg
+https://feeds.fireside.fm/bsdnow/rss
+http://downloads.bbc.co.uk/podcasts/radio4/fooc/rss.xml
+$ podcastdl -c podcasts.cfg -o . -d 3
+$ mpg123 *.mp3 
+.DE
+The options -o specifies the directory the podcasts will
+be downloaded to, and -d - the period in days.  
+.NH 2
+External Media
+.PP
+Every now and then we still need USB sticks and CDs. This
+section shows how to initialize them and mount them. The
+process is similar to initializing a hard drive and
+deserves attention.
+.NH 3
+USB Sticks 
+.PP
+Plugin the stick and check in dmesg how the system
+recognize it:
+.DS
+$ dmesg
+[ 127060.584075] sd0 at scsibus0 target 0 lun 0: <PNY, USB 3.2.1 FD, PMAP> disk removable
+[ 127060.595366] sd0: fabricating a geometry
+[ 127060.595366] sd0: 115 GB, 118236 cyl, 64 head, 32 sec, 512 bytes/sect x 242147328 sectors
+[ 127060.615008] sd0: fabricating a geometry
+.DE
+.PP
+It recognizes it as sd0 and its device entry is /dev/sd0.
+Next we write 0s to its 1MB:
+.DS
+$ sudo dd if=/dev/zero of=/dev/rsd0c bs=1m count=1
+1+0 records in
+1+0 records out
+1048576 bytes transferred in 0.347 secs (3021832 bytes/sec)
+.DE
+Note that we specify the output device, that is the USB
+stick as /dev/rsd0c. That means we access the raw device
+of the corresponding device files. The raw devices provide
+direct access bypassing the operating system's buffers and
+caches. 
+.PP
+Next we need to create an partition on the USB stick. The
+partition can be of almost any filesystem provided the
+systems that will mount it support it. We can use an MSDOS
+partition as it is the the most popular type. The command
+that creates partions is fdisk:
+.DS
+$ sudo fdisk -au sd0 
+.DE
+The program fdisk prompts for input. In this session we
+tell it to change partition 0. We specify its filesystem
+type as MSDOS (sysid 11), set its boundaries - make it
+occupy the whole USD drive and make it active. 
+.PP
+Next we need to initialize the filesystem:
+.DS
+$ sudo newfs_msdos /dev/rsd0e
+.DE
+.PP
+We have fully initialized the USB drive and we can start
+using it:
+.DS
+$ sudo mount_msdos /dev/sd0e /mnt
+$ cd /mnt
+$ sudo touch myfile
+$ sudo cp ~/file.txt .
+$ cd
+$ sudo umount /mnt
+.DE
+Note that we have to use sudo to mount the stick and for
+all the commands that write to the USB stick. This
+contrasts with other operating systems that automatically
+mount everything plugged into them. In the past the
+setting the vfs.generic.usermount sysctl to non-zero
+allowed a non-root user to mount external devices. Now it
+cannot be enabled if the kern.securelevel sysctl is above
+0.
+.NH 3
+CDs and DVDs
+.PP
+I had no luck with external USB CD / DVD drives on the
+Pinebook. I have an Apple USB SuperDrive. When I plugged
+it it refused to accept any CD. I tried with another
+external CD drive I got from Amazon. I was able to put a
+CD in it, but it refused to spin.
+.PP
+I used another NetBSD machine for the two examples below.
+.NH 4 
+Mounting a Data CD
+.PP
+Mount a data CD is similar to mount an USB drive -just
+need to change the filesystem and the device:
+.DS
+$ sudo mount_cd9660 /dev/cd0a /mnt
+$ ls /mnt
+$ cp /mnt/somefile ~
+$ sudo umount
+$ sudo chown me ~/somefile
+.DE
+.NH 4 
+Ripping a Music CD
+.PP
+We need two packages to extract the music tracks from a CD.
+cdparanoia extracts them and saves them to WAV files. 
+.DS
+$ sudo pkgin install cdparanoia
+$ sudo cdparanoia -B
+$ chown me *.wav
+.DE
+Next we need an encoder, for example bladeenc, to convert
+them to MP3s.
+.DS
+$ sudo pkgin install bladeenc
+$ bladeenc *.wav
+.DE
+Optionally we could fetch the data about the CDs from CDDB.
+There are two command-line rippers in NetBSD packages
+collection that were supposed to do it, but they use the
+old FreeDB that does not exist anymore and they crash.
+That is a good opportunity to send patches or create a
+new package.
 .NH 2
 Typesetting
 .PP
+There are at least 3 text processing systems on Unix -
+groff, TeX / LaTeX and Docbook. Their main
+characteristics is that they separate content from
+presentation and thus the content can be transformed into
+several formats. Their input is usually plain text and
+can be easily version-controlled.
+.PP
+Docbook defines the content in XML format. Then XSLT
+transformations convert it to HTML, PDF, man pages, etc.
+.PP
+TeX / LaTeX is popular for math typesetting. TeX defines
+low-level formatting. LaTeX defines more logical structures
+like books, articles, section, subsections, table of
+contents, bibliographies, etc. The output can be DVI, PS
+and PDF. TeX Live is a cross-platform distribution for TeX 
+typesetting available as a NetBSD package.
+.PP
+We will discuss in more detail the nroff / groff programs.
+They are part of the base system. Their input consists
+of plain text with formatting commands. Furthermore they
+are programmable and macros can group formatting commands
+creating logical elements of the text. For example,
+instead of explicitly centering a line and making it bold
+a macro can declare it as a title. This provides a great
+amount of flexibility - if we redefine a macro but
+preserve its logical name we can change the document
+appearance significantly. The macros are grouped in
+packages.
+.PP
+This document uses groff with the ms package and I will
+share my experience. The structure of a groff document is
+.DS
+\&.TL
+Title
+\&.AU
+Author
+\&.AB
+Abstract
+\&.AE
+\&.NH
+Numbered Heading
+\&.PP
+Paragraph
+\&.NH 2
+Numbered Subheading
+\&.PP
+Paragraph
+\&.DS
+Verbatim
+\&.DE
+\&.NH
+Next Numbered Heading
+.DE
+B
+The general form of the command that renders the document
+.DS
+$ groff -ms -T<output> doc.tr > doc.<out>
+.DE
+The command that renders it for the terminal similar to
+man is
+.DS
+$ groff -ms -Tascii doc.tr > doc.out
+$ less doc.out
+.DE
+Here is my development cycle. I put the groff command in a
+Makefile:
+.DS
+advmin.out: advmin.tr
+	groff -ms -Tascii ${.ALLSRC} > ${.TARGET}
+.DE
+In a tmux window I have two panes. In the right one I open
+the groff document in vi. In the left one I view the
+output with less. I run :!make vi command to run groff and
+then in the pane with less I press R to refresh it.
+.PP
+In the final stages I generate the ps output:
+.DS
+advmin.ps: advmin.tr
+	groff -ms -Tps ${.ALLSRC} > ${.TARGET}
+.DE
+There are many way to convert the ps output to a pdf. I
+chose to use the command ps2pdf from the package
+ghostscript.
+.DS
+$ sudo pkgin install ghostscript
+$ ps2pdf advmin.ps
+.DE
+As a make target that looks like:
+.DS
+advmin.pdf: advmin.ps
+	ps2pdf ${.ALLSRC}
+.DE
+Of course when I view I need X and a PDF reader like mupdf.
 
