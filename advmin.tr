@@ -916,5 +916,7 @@ As a make target that looks like:
 advmin.pdf: advmin.ps
 	ps2pdf ${.ALLSRC}
 .DE
-Of course when I view I need X and a PDF reader like mupdf.
-
+Of course when I view it I need X and a PDF reader like
+mupdf.
+.NH
+Open Problems
